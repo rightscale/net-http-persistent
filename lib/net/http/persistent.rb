@@ -281,6 +281,16 @@ class Net::HTTP::Persistent
   end
 
   ##
+  # Returns a new nested hash
+  #
+  # Using a class method to limit the bindings referenced by the
+  # hash's default_proc
+
+  def self.new_nested_hash
+    Hash.new { |h,k| h[k] = {} }
+  end
+
+  ##
   # This client's OpenSSL::X509::Certificate
 
   attr_reader :certificate
@@ -633,8 +643,8 @@ class Net::HTTP::Persistent
   # Creates a new connection for +uri+
 
   def connection_for uri
-    Thread.current[@generation_key]     ||= Hash.new { |h,k| h[k] = {} }
-    Thread.current[@ssl_generation_key] ||= Hash.new { |h,k| h[k] = {} }
+    Thread.current[@generation_key]     ||= Net::HTTP::Persistent.new_nested_hash
+    Thread.current[@ssl_generation_key] ||= Net::HTTP::Persistent.new_nested_hash
     Thread.current[@request_key]        ||= Hash.new 0
     Thread.current[@timeout_key]        ||= Hash.new EPOCH
 
@@ -1156,6 +1166,9 @@ class Net::HTTP::Persistent
 
     thread[@request_key] = nil
     thread[@timeout_key] = nil
+
+    thread[@generation_key] = nil
+    thread[@ssl_generation_key] = nil
   end
 
   ##
